@@ -39,8 +39,8 @@ export function WhatsAppButton({ produto, variant = "both", className }: WhatsAp
     }
   }, [mensagem]);
 
-  const handleAbrir = useCallback(() => {
-    const numero = getWhatsAppNumber();
+  const handleAbrir = useCallback(async () => {
+    const numero = await getWhatsAppNumber();
     abrirWhatsApp(mensagem, numero);
   }, [mensagem]);
 

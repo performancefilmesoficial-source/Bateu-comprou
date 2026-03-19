@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = converterParaAfiliado(link);
+    const result = await converterParaAfiliado(link);
 
     return NextResponse.json({
       linkAfiliado: result.linkAfiliado,

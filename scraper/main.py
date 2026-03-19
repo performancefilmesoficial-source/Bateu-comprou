@@ -213,9 +213,40 @@ async def iniciar_scheduler():
 
 
 # ─────────────────────────────────────────────────────────────
+# Servidor HTTP para Gatilho Manual
+# ─────────────────────────────────────────────────────────────
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import threading
+
+class TriggerHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == "/scrape":
+            self.send_response(200)
+            self.send_header("Content-type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(b'{"status": "started"}')
+            
+            # Inicia varredura em background para não travar a resposta
+            logger.info("⚡ Gatilho manual recebido via HTTP!")
+            asyncio.run_coroutine_threadsafe(executar_varredura(), loop)
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+def iniciar_servidor_http():
+    server = HTTPServer(("0.0.0.0", 8000), TriggerHandler)
+    logger.info("🌐 Servidor de gatilho manual ouvindo na porta 8000")
+    server.serve_forever()
+
+# ─────────────────────────────────────────────────────────────
 # Entry point
 # ─────────────────────────────────────────────────────────────
+loop = asyncio.new_event_loop()
+
 if __name__ == "__main__":
+    asyncio.set_event_loop(loop)
+    
     parser = argparse.ArgumentParser(
         description="🛒 Bateu, Comprou — Monitor de Produtos de Afiliados"
     )
@@ -236,7 +267,13 @@ if __name__ == "__main__":
         sys.exit(0)
     elif args.agora:
         logger.info("▶ Modo: Varredura imediata")
-        asyncio.run(executar_varredura())
+        loop.run_until_complete(executar_varredura())
     else:
-        logger.info("▶ Modo: Scheduler contínuo")
-        asyncio.run(iniciar_scheduler())
+        logger.info("▶ Modo: Scheduler contínuo + Servidor HTTP")
+        
+        # Inicia o servidor HTTP em uma thread separada
+        thread = threading.Thread(target=iniciar_servidor_http, daemon=True)
+        thread.start()
+        
+        # Inicia o scheduler no loop principal
+        loop.run_until_complete(iniciar_scheduler())

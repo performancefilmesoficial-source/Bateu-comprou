@@ -28,19 +28,21 @@ export function detectarLoja(url: string): Loja {
 }
 
 /**
- * Auxiliar para buscar configuração salva no navegador ou fallback para .env
+ * Auxiliar para buscar configuração salva no Supabase (Persistente no Servidor)
  */
-function getConfig(key: string, envFallback: string): string {
-  if (typeof window !== "undefined") {
-    try {
-      const saved = localStorage.getItem("bateu_comprou_config");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return parsed[key] || envFallback;
-      }
-    } catch (e) {
-      console.error("Erro ao ler config local:", e);
-    }
+async function getRemoteConfig(key: string, envFallback: string): Promise<string> {
+  // Nota: Isso será usado apenas via API Routes (Servidor)
+  const { supabase } = await import("./supabaseClient");
+  try {
+    const { data, error } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", key)
+      .single();
+    
+    if (data && !error) return data.value || envFallback;
+  } catch (e) {
+    console.error("Erro ao ler config do Supabase:", e);
   }
   return envFallback;
 }
@@ -49,7 +51,7 @@ function getConfig(key: string, envFallback: string): string {
  * Converte um link de produto para link de afiliado.
  * Injeta o ID de afiliado correto com base na loja detectada.
  */
-export function converterParaAfiliado(linkOriginal: string): AfiliateResult {
+export async function converterParaAfiliado(linkOriginal: string): Promise<AfiliateResult> {
   const loja = detectarLoja(linkOriginal);
 
   try {
@@ -57,9 +59,8 @@ export function converterParaAfiliado(linkOriginal: string): AfiliateResult {
 
     switch (loja) {
       case "mercadolivre": {
-        const id = getConfig("AFFILIATE_ID_ML", process.env.NEXT_PUBLIC_AFFILIATE_ID_ML || "");
+        const id = await getRemoteConfig("AFFILIATE_ID_ML", process.env.NEXT_PUBLIC_AFFILIATE_ID_ML || "");
         if (id) {
-          // Remove parâmetros de rastreio anteriores
           url.searchParams.delete("utm_source");
           url.searchParams.delete("utm_campaign");
           url.searchParams.set("aff_id", id);
@@ -70,20 +71,17 @@ export function converterParaAfiliado(linkOriginal: string): AfiliateResult {
       }
 
       case "amazon": {
-        const tag = getConfig("AFFILIATE_ID_AMAZON", process.env.NEXT_PUBLIC_AFFILIATE_ID_AMAZON || "");
+        const tag = await getRemoteConfig("AFFILIATE_ID_AMAZON", process.env.NEXT_PUBLIC_AFFILIATE_ID_AMAZON || "");
         if (tag) {
-          // Amazon usa o parâmetro 'tag'
           url.searchParams.set("tag", tag);
-          // Remove parâmetros desnecessários
           ["linkCode", "ref_", "ref"].forEach(p => url.searchParams.delete(p));
         }
         return { linkAfiliado: url.toString(), loja, idUsado: tag || null };
       }
 
       case "shopee": {
-        const id = getConfig("AFFILIATE_ID_SHOPEE", process.env.NEXT_PUBLIC_AFFILIATE_ID_SHOPEE || "");
+        const id = await getRemoteConfig("AFFILIATE_ID_SHOPEE", process.env.NEXT_PUBLIC_AFFILIATE_ID_SHOPEE || "");
         if (id) {
-          // Shopee usa o formato de link de afiliado próprio
           const linkShopee = `https://s.shopee.com.br/aff?aff_id=${id}&url=${encodeURIComponent(linkOriginal)}`;
           return { linkAfiliado: linkShopee, loja, idUsado: id };
         }
@@ -101,13 +99,14 @@ export function converterParaAfiliado(linkOriginal: string): AfiliateResult {
 /**
  * Retorna o número de WhatsApp configurado (local ou env)
  */
-export function getWhatsAppNumber(): string {
-  return getConfig("WHATSAPP_NUMBER", process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "");
+export async function getWhatsAppNumber(): Promise<string> {
+  return getRemoteConfig("WHATSAPP_NUMBER", process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "");
 }
 
 /**
  * Versão simplificada — retorna apenas a URL do link de afiliado.
  */
-export function gerarLinkAfiliado(linkOriginal: string): string {
-  return converterParaAfiliado(linkOriginal).linkAfiliado;
+export async function gerarLinkAfiliado(linkOriginal: string): Promise<string> {
+  const res = await converterParaAfiliado(linkOriginal);
+  return res.linkAfiliado;
 }

@@ -10,7 +10,8 @@ import {
   Menu, 
   X,
   LogOut,
-  Users
+  Users,
+  Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -73,7 +74,23 @@ export function Sidebar() {
           </nav>
 
           {/* User Section */}
-          <div className="p-4 mt-auto border-t border-slate-100">
+          <div className="p-4 mt-auto border-t border-slate-100 space-y-4">
+            <button 
+              onClick={async () => {
+                try {
+                  const res = await fetch("http://ags8wkowgwgccswk8o8cok4o.187.77.53.227.sslip.io:8000/scrape");
+                  if (res.ok) alert("🚀 Sincronização iniciada em background!");
+                  else alert("❌ Erro ao iniciar sincronização.");
+                } catch (e) {
+                  alert("❌ Erro de conexão com o Scraper.");
+                }
+              }}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-primary text-white rounded-xl font-bold text-sm hover:scale-105 active:scale-95 transition-all shadow-lg shadow-primary/20 group"
+            >
+              <Zap size={16} className="group-hover:animate-pulse" />
+              <span>Sincronizar Agora</span>
+            </button>
+
             <div className="flex items-center justify-between p-2">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
@@ -82,7 +99,11 @@ export function Sidebar() {
                 <p className="text-sm font-bold text-slate-700">Admin User</p>
               </div>
               <button 
-                onClick={() => console.log("Sair")}
+                onClick={async () => {
+                  const { supabase } = await import("@/lib/supabaseClient");
+                  await supabase.auth.signOut();
+                  window.location.href = "/login";
+                }}
                 className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                 title="Sair"
               >

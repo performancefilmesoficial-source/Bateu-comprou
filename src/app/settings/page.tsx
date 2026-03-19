@@ -32,19 +32,16 @@ export default function SettingsPage() {
   });
 
   useEffect(() => {
-    // Carregar do localStorage se houver
-    const saved = localStorage.getItem("bateu_comprou_config");
-    if (saved) {
-      setConfig(JSON.parse(saved));
-    } else {
-      // Fallback para as envs expostas no client
-      setConfig({
-        AFFILIATE_ID_ML: process.env.NEXT_PUBLIC_AFFILIATE_ID_ML || "",
-        AFFILIATE_ID_AMAZON: process.env.NEXT_PUBLIC_AFFILIATE_ID_AMAZON || "",
-        AFFILIATE_ID_SHOPEE: process.env.NEXT_PUBLIC_AFFILIATE_ID_SHOPEE || "",
-        WHATSAPP_NUMBER: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "",
-      });
+    async function loadConfig() {
+      const { supabase } = await import("@/lib/supabaseClient");
+      const { data, error } = await supabase.from("app_settings").select("*");
+      if (data && !error) {
+        const remote: any = {};
+        data.forEach((item: any) => remote[item.key] = item.value);
+        setConfig(prev => ({ ...prev, ...remote }));
+      }
     }
+    loadConfig();
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -54,16 +51,14 @@ export default function SettingsPage() {
     setSuccess(false);
 
     try {
-      // Salva no localStorage para uso imediato nos links de afiliados
-      localStorage.setItem("bateu_comprou_config", JSON.stringify(config));
-      
-      // Simulando chamada de API
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      const { supabase } = await import("@/lib/supabaseClient");
+      const updates = Object.entries(config).map(([key, value]) => ({ key, value }));
+      const { error } = await supabase.from("app_settings").upsert(updates);
+      if (error) throw error;
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      setError("Ocorreu um erro ao salvar as configurações.");
+      setError("Erro ao salvar no servidor.");
     } finally {
       setLoading(false);
     }

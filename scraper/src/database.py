@@ -63,6 +63,21 @@ CREATE TABLE IF NOT EXISTS scraper_execucoes (
     erros            TEXT[],
     status          TEXT DEFAULT 'running' CHECK (status IN ('running', 'success', 'failed'))
 );
+
+-- Tabela de configurações globais persistentes no servidor
+CREATE TABLE IF NOT EXISTS app_settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Insere chaves default se não existirem
+INSERT INTO app_settings (key, value) VALUES 
+('AFFILIATE_ID_ML', ''),
+('AFFILIATE_ID_AMAZON', ''),
+('AFFILIATE_ID_SHOPEE', ''),
+('WHATSAPP_NUMBER', '')
+ON CONFLICT (key) DO NOTHING;
 """
 
 

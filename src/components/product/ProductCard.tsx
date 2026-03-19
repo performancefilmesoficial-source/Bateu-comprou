@@ -20,12 +20,22 @@ interface ProductCardProps {
 export function ProductCard({ image, discount, oldPrice, currentPrice, title, linkOriginal = "#", loja = "mercadolivre", onOpenVideo }: ProductCardProps) {
   const [legenda, setLegenda] = useState<string | null>(null);
   const [loadingIA, setLoadingIA] = useState(false);
+  const [affiliateLink, setAffiliateLink] = useState<string>(linkOriginal);
 
-  // Busca legenda gerada por IA ao carregar o card
+  // Busca legenda gerada por IA e Link de Afiliado ao carregar o card
   useEffect(() => {
-    async function fetchLegenda() {
+    async function fetchData() {
       setLoadingIA(true);
       try {
+        // Busca link de afiliado no servidor
+        const affRes = await fetch("/api/affiliate-link", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ link: linkOriginal }),
+        });
+        const affData = await affRes.json();
+        if (affData.linkAfiliado) setAffiliateLink(affData.linkAfiliado);
+
         const res = await fetch("/api/ai-caption", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -39,13 +49,13 @@ export function ProductCard({ image, discount, oldPrice, currentPrice, title, li
         const data = await res.json();
         setLegenda(data.legenda);
       } catch (error) {
-        console.error("Erro ao carregar legenda IA:", error);
+        console.error("Erro ao carregar dados do card:", error);
       } finally {
         setLoadingIA(false);
       }
     }
-    fetchLegenda();
-  }, [title, currentPrice, loja, discount]);
+    fetchData();
+  }, [title, currentPrice, loja, discount, linkOriginal]);
 
   const precoNumerico = parseFloat(currentPrice.replace(".", "").replace(",", "."));
   const precoOriginalNum = parseFloat(oldPrice.replace(".", "").replace(",", "."));
@@ -136,7 +146,7 @@ export function ProductCard({ image, discount, oldPrice, currentPrice, title, li
         <div className="mt-auto space-y-2.5">
           {/* Botão Ir para Loja (Link Direto) */}
           <a 
-            href={linkOriginal === "#" ? "#" : gerarLinkAfiliado(linkOriginal)}
+            href={affiliateLink}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full h-12 flex items-center justify-center gap-2 bg-primary text-white rounded-2xl font-black text-[12px] uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-[0_8px_20px_rgb(59,130,246,0.2)] group/shop"
@@ -151,7 +161,7 @@ export function ProductCard({ image, discount, oldPrice, currentPrice, title, li
               preco: precoNumerico,
               precoOriginal: precoOriginalNum,
               descontoPct: parseInt(discount),
-              linkOriginal: linkOriginal,
+              linkOriginal: affiliateLink,
               loja: loja,
               estoqueDisponivel: true,
               legendaIA: legenda

@@ -74,10 +74,27 @@ export function VideoTracker({ productTitle, isOpen, onClose }: VideoTrackerProp
 
         {/* Content */}
         <div className="max-h-[70vh] overflow-y-auto p-6 scrollbar-hide">
+          <div className="flex gap-4 mb-6 sticky top-0 bg-white py-2 z-10 border-b border-border/50">
+            <button 
+              onClick={() => setVideos(prev => [...prev])} // Just force re-render if needed
+              className="flex-1 py-1.5 rounded-lg bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-widest border border-red-100"
+            >
+              YouTube
+            </button>
+            <a 
+              href={`https://www.tiktok.com/search?q=${encodeURIComponent(productTitle + " achados review")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 py-1.5 rounded-lg bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest text-center"
+            >
+              TikTok (Busca Real)
+            </a>
+          </div>
+
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 space-y-4">
               <Loader2 className="animate-spin text-primary" size={40} />
-              <p className="text-sm font-medium text-muted-foreground">Buscando virais no YouTube...</p>
+              <p className="text-sm font-medium text-muted-foreground">Buscando virais...</p>
             </div>
           ) : videos.length > 0 ? (
             <div className="grid gap-6">
@@ -131,8 +148,16 @@ export function VideoTracker({ productTitle, isOpen, onClose }: VideoTrackerProp
               ))}
             </div>
           ) : (
-            <div className="text-center py-20">
-              <p className="text-muted-foreground">Nenhum vídeo viral encontrado para este termo.</p>
+            <div className="text-center py-20 px-6 space-y-4">
+               <p className="text-muted-foreground text-sm italic">Nenhum vídeo específico carregado no Feed.</p>
+               <a 
+                href={`https://www.tiktok.com/search?q=${encodeURIComponent(productTitle + " review")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block px-8 py-3 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest"
+               >
+                 Abrir Busca no TikTok
+               </a>
             </div>
           )}
         </div>
