@@ -9,8 +9,10 @@ import OpenAI from "openai";
 // Cache em memória: chave = nome do produto
 const cache = new Map<string, string>();
 
+export const dynamic = 'force-dynamic';
+
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY || "sk-placeholder-for-build",
 });
 
 export async function POST(request: NextRequest) {
