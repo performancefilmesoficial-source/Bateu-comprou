@@ -20,6 +20,7 @@ const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
   { icon: Trophy, label: "Ranking & Oportunidades", href: "/ranking" },
   { icon: Play, label: "Vídeos Virais", href: "#" },
+  { icon: User, label: "Gestão de Usuários", href: "/admin/users" },
   { icon: Settings, label: "Configurações de Afiliado", href: "/settings" },
 ];
 
@@ -105,14 +106,14 @@ export function Sidebar() {
               <span>Sincronizar Dados</span>
             </button>
 
-            <div className="flex items-center justify-between p-2">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/10">
-                   <img src="/logo.png" alt="Brand" className="w-5 h-auto opacity-70" />
+            <div className="flex items-center justify-between p-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center border border-primary/10 transition-transform hover:scale-105">
+                   <img src="/logo.png" alt="Brand" className="w-7 h-auto object-contain" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase text-primary tracking-tighter">Bateu Comprou</span>
-                  <span className="text-[9px] text-muted-foreground font-bold">Admin</span>
+                  <span className="text-[11px] font-black uppercase text-slate-800 tracking-tighter leading-none">Dashboard</span>
+                  <span className="text-[9px] text-primary font-black uppercase tracking-widest mt-1">Admin Panel</span>
                 </div>
               </div>
               <button 
@@ -122,10 +123,10 @@ export function Sidebar() {
                   await supabase.auth.signOut();
                   window.location.href = "/login";
                 }}
-                className="p-2 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                 title="Sair"
               >
-                <LogOut size={16} />
+                <LogOut size={18} />
               </button>
             </div>
           </div>

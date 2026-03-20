@@ -181,9 +181,9 @@ async def _check_estoque(context: BrowserContext, link: str) -> dict:
             img_src = await img_el.get_attribute("data-zoom") or \
                       await img_el.get_attribute("src")
             if img_src and img_src.startswith("http"):
-                # Garante qualidade máxima substituindo sufixo de miniatura (-V, -I, -M) por -OO (Original)
-                # Ex: D_NQ_...-V.webp -> D_NQ_...-OO.webp
-                high_res = re.sub(r"-[VIM]\.(webp|jpg|png)$", r"-OO.\1", img_src)
+                # Garante qualidade máxima substituindo sufixos de miniatura (-V, -I, -M, -F, -L, -X) por -O (Original/High)
+                # Ex: D_NQ_...-V.webp -> D_NQ_...-O.webp
+                high_res = re.sub(r"-[VIMFLX]\.(webp|jpg|png|jpeg)$", r"-O.\1", img_src, flags=re.IGNORECASE)
                 resultado["imagem_ajustada"] = high_res
                 logger.debug(f"📸 ML: Forçando HQ para {high_res}")
 

@@ -33,7 +33,7 @@ HEADERS = {
     "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
 }
 
-FLASH_SALE_URL   = "https://shopee.com.br/flash_sale"
+FLASH_SALE_URL   = "https://shopee.com.br/search?keyword=ofertas"
 MAIS_VENDIDOS_URL = "https://shopee.com.br/search?keyword=mais+vendidos&sortBy=sales"
 
 
@@ -43,8 +43,9 @@ async def _scrape_lista(page: Page, url: str, min_rating: float, max_products: i
 
     try:
         await page.set_extra_http_headers(HEADERS)
-        await page.goto(url, wait_until="networkidle", timeout=60000)
-        await asyncio.sleep(5)
+        await page.goto(url, wait_until="domcontentloaded", timeout=60000)
+        # Timeout maior para o React renderizar os componentes dinâmicos
+        await asyncio.sleep(15) 
     except Exception as e:
         logger.warning(f"⚠️ Shopee: Não foi possível carregar {url}: {e}")
         return []
@@ -52,22 +53,35 @@ async def _scrape_lista(page: Page, url: str, min_rating: float, max_products: i
     # Scroll progressivo e espera por cards
     try:
         await page.set_extra_http_headers({**HEADERS, "Referer": "https://shopee.com.br/"})
-        await page.wait_for_selector(SHOPEE_SELECTORS["card"], timeout=25000)
-    except:
-        logger.warning("🕒 Shopee: Timeout aguardando cards. Tentando scroll e captura de tela de depuração...")
-        await page.screenshot(path=f"logs/error_shopee_{int(asyncio.get_event_loop().time())}.png")
+        # Tenta múltiplos seletores comuns de cards da Shopee
+        selectors = [SHOPEE_SELECTORS["card"], ".shopee-search-item-result__item", "div[class*='item-card']"]
+        found = False
+        for s in selectors:
+            try:
+                await page.wait_for_selector(s, timeout=10000)
+                found = True
+                logger.info(f"🎯 Shopee: Cards carregados com seletor {s}")
+                break
+            except: continue
+        
+        if not found:
+            logger.warning("🕒 Shopee: Nenhum seletor conhecido funcionou. O site pode estar bloqueando (Login Wall).")
+            return []
+            
+    except Exception as e:
+        logger.warning(f"⚠️ Shopee: Erro ao aguardar seletores: {e}")
 
     for i in range(12):
         await page.evaluate(f"window.scrollTo(0, {(i + 1) * 800})")
         await asyncio.sleep(2)
-        current_cards = await page.query_selector_all(SHOPEE_SELECTORS["card"])
-        if len(current_cards) >= max_products:
-            break
 
+    # Coleta de cards com seletores múltiplos
     cards = await page.query_selector_all(SHOPEE_SELECTORS["card"])
     if not cards:
-        logger.error(f"❌ Shopee: Nenhum card encontrado. O site pode estar bloqueando o acesso automatizado.")
-        # Abre screenshot para análise se necessário
+        cards = await page.query_selector_all(".shopee-search-item-result__item")
+        
+    if not cards:
+        logger.error(f"❌ Shopee: Nenhum card encontrado. Tentando captura de tela para inspeção.")
         return []
         
     logger.info(f"🛒 Shopee: {len(cards)} cards encontrados em {url}")
