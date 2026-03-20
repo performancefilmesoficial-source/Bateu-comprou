@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { AppWrapper } from "@/components/layout/AppWrapper";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -16,19 +16,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
-      <body className={`${inter.className} antialiased bg-background text-foreground`}>
-        <div className="flex">
-          {/* Sidebar */}
-          <Sidebar />
-
-          {/* Main Content Area */}
-          <div className="flex-1 lg:ml-64 min-h-screen">
-            <div className="max-w-[1400px] mx-auto">
-              {children}
-            </div>
-          </div>
-        </div>
+    <html lang="pt-BR" className="scroll-smooth">
+      <body className={`${inter.className} antialiased bg-background text-foreground selection:bg-primary/20`}>
+        <AppWrapper>
+          {children}
+        </AppWrapper>
       </body>
     </html>
   );

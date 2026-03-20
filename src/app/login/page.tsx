@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import React, { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { Lock, LogIn, Sparkles, Mail, Key } from "lucide-react";
+import { LogIn, Sparkles, Mail, Key, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -12,114 +13,167 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const supabase = createClient();
+
+  // Reset loading if it takes more than 15 seconds (fail-safe)
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    if (loading) {
+      timeout = setTimeout(() => {
+        setLoading(false);
+        setError("O servidor demorou muito para responder. Tente novamente.");
+      }, 15000);
+    }
+    return () => clearTimeout(timeout);
+  }, [loading]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (authError) {
-      setError("Email ou senha inválidos. Tente novamente.");
+      if (authError) {
+        setError("E-mail ou senha incorretos. Por favor, tente novamente.");
+        setLoading(false);
+      } else if (data.user) {
+        // Redireciona e força um refresh para atualizar o estado do middleware
+        router.push("/");
+        setTimeout(() => {
+           router.refresh();
+           window.location.href = "/"; // Força bruta se necessário
+        }, 100);
+      } else {
+        setError("Erro desconhecido ao tentar autenticar.");
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error("Erro crítico no login:", err);
+      setError("Erro de conexão com o servidor de autenticação.");
       setLoading(false);
-    } else {
-      router.push("/");
-      router.refresh();
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 relative overflow-hidden bg-[radial-gradient(circle_at_30%_20%,#3b82f615_0%,transparent_50%)]">
-      {/* Decorative Blur */}
-      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/20 blur-[120px] rounded-full" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-400/10 blur-[120px] rounded-full" />
-
-      <div className="w-full max-w-[420px] space-y-8 relative z-10">
-        <div className="text-center space-y-4">
-          <div className="inline-flex items-center justify-center p-4 bg-white shadow-xl shadow-primary/10 rounded-[2rem] border border-primary/10 mb-2">
-            <Lock className="text-primary animate-pulse" size={32} />
+    <div className="min-h-screen flex items-center justify-center p-4 bg-[#f8fbff] relative overflow-hidden">
+      {/* Background Decorativo - Suave e Moderno */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full animate-pulse" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-400/5 blur-[120px] rounded-full" />
+      
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-[420px] relative z-10"
+      >
+        {/* Logo de Hero - Substituindo texto por imagem da marca */}
+        <div className="text-center mb-8 space-y-4">
+          <div className="flex justify-center mb-4">
+             <div className="p-1 bg-white rounded-[2rem] shadow-xl shadow-primary/5">
+                <img 
+                  src="/logo.png" 
+                  alt="Bateu Comprou" 
+                  className="h-20 w-auto object-contain drop-shadow-sm" 
+                  onError={(e) => {
+                    // Fallback se a imagem não carregar
+                    (e.target as any).style.display = 'none';
+                    (e.target as any).nextSibling.style.display = 'block';
+                  }}
+                />
+                <h1 className="hidden text-2xl font-black italic tracking-tighter text-slate-800 uppercase">
+                  Bateu <span className="text-primary">Comprou</span>
+                </h1>
+             </div>
           </div>
-          <div className="space-y-1">
-            <div className="flex items-center justify-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.3em]">
-              <Sparkles size={12} />
-              <span>Acesso Restrito</span>
-            </div>
-            <h1 className="text-4xl font-black italic tracking-tighter uppercase italic leading-none">
-              Bateu <span className="text-primary">Comprou</span>
-            </h1>
+          
+          <div className="flex items-center justify-center gap-2 text-primary font-black text-[10px] uppercase tracking-[0.3em]">
+            <Sparkles size={12} />
+            <span>Acesso Restrito ao Dashboard</span>
           </div>
         </div>
 
-        <div className="bg-white/80 backdrop-blur-xl border border-white p-1 rounded-[2.8rem] shadow-2xl shadow-slate-200/50 overflow-hidden">
-          <div className="p-10 space-y-8 bg-gradient-to-b from-white to-slate-50/50 rounded-[2.5rem]">
-            <form onSubmit={handleLogin} className="space-y-5">
+        <div className="bg-white border border-slate-100 p-2 rounded-[3.5rem] shadow-2xl shadow-slate-200/60 overflow-hidden">
+          <div className="bg-gradient-to-b from-white to-slate-50/50 p-10 space-y-8 rounded-[3rem]">
+            <form onSubmit={handleLogin} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-4">E-mail</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">E-mail</label>
                 <div className="relative group">
-                  <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={16} />
+                  <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="seu@email.com"
-                    className="w-full pl-14 pr-6 py-4 bg-white border-2 border-slate-100 rounded-2xl text-sm font-bold focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all placeholder:text-slate-200 shadow-sm"
+                    placeholder="ex: admin@bateucomprou.com"
+                    className="w-full pl-14 pr-6 py-4.5 bg-white border-2 border-slate-100 rounded-3xl text-sm font-bold text-slate-700 placeholder:text-slate-200 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all shadow-sm"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-4">Senha</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Senha</label>
                 <div className="relative group">
-                  <Key className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={16} />
+                  <Key className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
                   <input
                     type="password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-14 pr-6 py-4 bg-white border-2 border-slate-100 rounded-2xl text-sm font-bold focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all placeholder:text-slate-200 shadow-sm"
+                    className="w-full pl-14 pr-6 py-4.5 bg-white border-2 border-slate-100 rounded-3xl text-sm font-bold text-slate-700 placeholder:text-slate-200 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all shadow-sm"
                   />
                 </div>
               </div>
 
-              {error && (
-                <div className="px-5 py-3 bg-red-50 border border-red-100 rounded-xl text-[10px] font-bold text-red-500 text-center animate-in slide-in-from-top-2 duration-300">
-                  {error}
-                </div>
-              )}
+              <AnimatePresence>
+                {error && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="flex items-center gap-3 px-5 py-3.5 bg-red-50 border border-red-100 rounded-2xl text-[11px] font-bold text-red-500 shadow-sm"
+                  >
+                    <AlertCircle size={16} className="shrink-0" />
+                    <span>{error}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <button
                 type="submit"
                 disabled={loading}
                 className={cn(
-                  "w-full h-16 rounded-[1.5rem] bg-primary text-white font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-primary/20 group",
-                  loading && "opacity-70 cursor-not-allowed"
+                  "w-full h-16 rounded-3xl bg-primary text-white font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-95 shadow-xl shadow-primary/25 disabled:opacity-50 disabled:grayscale group",
+                  loading && "cursor-wait"
                 )}
               >
                 {loading ? (
-                  <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  <div className="flex items-center gap-3">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Autenticando...</span>
+                  </div>
                 ) : (
                   <>
-                    <span>Entrar no Dashboard</span>
-                    <LogIn size={16} className="group-hover:translate-x-1 transition-transform" />
+                    <span>Entrar agora</span>
+                    <LogIn size={18} className="transition-transform group-hover:translate-x-1" />
                   </>
                 )}
               </button>
             </form>
 
-            <div className="pt-4 text-center">
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
-                Apenas usuários autorizados. <br /> Se esqueceu a senha, peça ao administrador.
+            <div className="pt-2 text-center">
+              <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest leading-relaxed">
+                Segurança Bateu Comprou <br /> 256-bit encryption active
               </p>
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
