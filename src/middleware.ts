@@ -80,6 +80,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - api/ (API routes - opcional, dependendo se quer proteger a API tb)
      */
-    "/((?!_next/static|_next/image|favicon.ico|api/).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/|logo.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

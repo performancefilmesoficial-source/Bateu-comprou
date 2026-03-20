@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { LogIn, Mail, Key, AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -15,13 +15,12 @@ export default function LoginPage() {
   const router = useRouter();
   const supabase = createClient();
 
-  // Fail-safe para o estado de loading
   useEffect(() => {
     let timeout: NodeJS.Timeout;
     if (loading) {
       timeout = setTimeout(() => {
         setLoading(false);
-        setError("O servidor demorou muito para responder. Tente novamente.");
+        setError("O servidor demorou muito para responder.");
       }, 15000);
     }
     return () => clearTimeout(timeout);
@@ -39,7 +38,7 @@ export default function LoginPage() {
       });
 
       if (authError) {
-        setError("E-mail ou senha incorretos.");
+        setError("Credenciais incorretas.");
         setLoading(false);
       } else if (data.user) {
         router.push("/");
@@ -52,113 +51,114 @@ export default function LoginPage() {
         setLoading(false);
       }
     } catch (err) {
-      setError("Erro de conexão.");
+      setError("Erro de rede.");
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-white">
-      {/* Container Principal Baseado no Wireframe: Minimalista, Fundo Branco e Card Cinza */}
+    <div className="min-h-screen flex items-center justify-center p-4 bg-white relative font-sans overflow-hidden">
+      {/* Background Decorativo sutil */}
+      <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-primary/5 blur-[150px] rounded-full" />
+      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-brand_orange/5 blur-[120px] rounded-full" />
+      
+      {/* Geometria Central (Card Alto) */}
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4 }}
-        className="w-full max-w-[420px] bg-[#f2f4f7] rounded-[3rem] p-10 md:p-12 shadow-sm border border-slate-200/50"
+        className="w-[380px] h-[720px] bg-[#f8f9fb] rounded-[3rem] flex flex-col items-center justify-center py-12 px-6 shadow-2xl relative z-10 border border-slate-100/50 overflow-hidden"
       >
-        <div className="space-y-10">
-          {/* Logo Centralizada no Topo do Card */}
-          <div className="flex justify-center">
-            <img 
-              src="/logo.png" 
-              alt="Bateu Comprou" 
-              className="h-24 w-auto object-contain drop-shadow-sm"
-            />
+        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary/20 via-brand_orange/20 to-primary/20" />
+
+        <div className="flex flex-col items-center w-full max-w-[280px] space-y-12">
+          {/* LOGO: Mais compacta dentro do esqueleto */}
+          <div className="w-fit flex justify-center">
+              <div className="bg-white p-4 rounded-[2rem] shadow-lg shadow-slate-200/50 flex items-center justify-center transition-transform hover:scale-105">
+                  <img 
+                    src="/logo.png" 
+                    alt="Logo Bateu Comprou" 
+                    className="h-28 w-auto object-contain mix-blend-multiply" 
+                  />
+              </div>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-6">
-            {/* Campo E-mail */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Login</label>
-              <div className="relative group">
-                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
+          {/* FORM: Campos mais centralizados e com menor largura */}
+          <form onSubmit={handleLogin} className="w-full flex flex-col items-center space-y-8">
+            
+            <div className="w-full space-y-6">
+              {/* Campo Login narrowed */}
+              <div className="flex flex-col space-y-1.5 px-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 ml-1 tracking-widest">Login</label>
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Seu usuário ou e-mail"
-                  className="w-full pl-14 pr-6 py-4.5 bg-white border border-slate-200 rounded-3xl text-sm font-bold text-slate-700 placeholder:text-slate-200 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all shadow-sm"
+                  placeholder="Usuário"
+                  className="w-full h-12 bg-white border border-slate-200 rounded-2xl px-5 text-sm font-bold text-slate-800 focus:outline-none focus:border-primary/50 transition-all shadow-sm placeholder:text-slate-200"
                 />
               </div>
-            </div>
 
-            {/* Campo Senha */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4">Senha</label>
-              <div className="relative group">
-                <Key className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
+              {/* Campo Senha narrowed */}
+              <div className="flex flex-col space-y-1.5 px-2">
+                <label className="text-[10px] font-black uppercase text-slate-400 ml-1 tracking-widest">Senha</label>
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Sua senha"
-                  className="w-full pl-14 pr-6 py-4.5 bg-white border border-slate-200 rounded-3xl text-sm font-bold text-slate-700 placeholder:text-slate-200 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all shadow-sm"
+                  placeholder="••••••••"
+                  className="w-full h-12 bg-white border border-slate-200 rounded-2xl px-5 text-sm font-bold text-slate-800 focus:outline-none focus:border-primary/50 transition-all shadow-sm placeholder:text-slate-200"
                 />
               </div>
             </div>
 
-            {/* Opção Esqueceu a Senha */}
-            <div className="flex justify-end pr-2">
+            <div className="flex flex-col items-center space-y-6 pt-2">
+              {/* Botão Diminuído e Centralizado com Degradê */}
+              <button
+                type="submit"
+                disabled={loading}
+                className={cn(
+                  "w-[180px] h-12 bg-gradient-to-r from-primary to-brand_orange text-white font-black text-[11px] uppercase tracking-[0.2em] rounded-2xl shadow-xl hover:brightness-105 active:scale-[0.97] transition-all flex items-center justify-center gap-2",
+                  loading && "cursor-wait opacity-80"
+                )}
+              >
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    <span>Entrar</span>
+                    <ArrowRight size={16} />
+                  </>
+                )}
+              </button>
+
               <button 
                 type="button" 
-                className="text-[10px] font-black text-slate-400 hover:text-primary transition-colors uppercase tracking-widest"
+                className="text-[9px] font-black text-slate-300 hover:text-brand_orange transition-colors uppercase tracking-[0.4em]"
               >
-                Esqueceu a senha?
+                Esqueceu o acesso?
               </button>
             </div>
 
-            {/* Mensagens de Erro */}
             <AnimatePresence>
               {error && (
                 <motion.div 
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex items-center gap-3 px-5 py-3.5 bg-red-50 text-red-500 rounded-2xl text-[11px] font-bold border border-red-100"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-red-500 text-[9px] font-black uppercase tracking-widest bg-red-50 px-4 py-2 rounded-lg border border-red-50 text-center"
                 >
-                  <AlertCircle size={16} className="shrink-0" />
-                  <span>{error}</span>
+                  {error}
                 </motion.div>
               )}
             </AnimatePresence>
-
-            {/* Botão de Entrar */}
-            <button
-              type="submit"
-              disabled={loading}
-              className={cn(
-                "w-full h-16 rounded-[2rem] bg-primary text-white font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all hover:brightness-105 active:scale-95 shadow-xl shadow-primary/20",
-                loading && "cursor-wait opacity-80"
-              )}
-            >
-              {loading ? (
-                <Loader2 className="w-6 h-6 animate-spin" />
-              ) : (
-                <>
-                  <span>Entrar no Sistema</span>
-                  <LogIn size={20} />
-                </>
-              )}
-            </button>
           </form>
 
-          {/* Rodapé do Card */}
-          <div className="text-center">
-            <p className="text-[10px] text-slate-300 font-bold uppercase tracking-[0.3em]">
-              Bateu Comprou &copy; 2026
-            </p>
+          {/* Rodapé Interno */}
+          <div className="opacity-20 pt-4">
+             <p className="text-[8px] text-slate-300 font-black uppercase tracking-[0.6em] text-center">
+               Dashboard &bull; Sync
+             </p>
           </div>
         </div>
       </motion.div>
