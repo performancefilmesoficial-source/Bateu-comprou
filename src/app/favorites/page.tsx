@@ -1,29 +1,35 @@
 import Sidebar from "@/components/dashboard/Sidebar";
 import ProductCard from "@/components/dashboard/ProductCard";
-import Header from "@/components/dashboard/Header";
-import { getProducts } from "./actions";
+import { getFavoritedProducts } from "@/app/actions";
+import { Heart } from "lucide-react";
 
-export default async function Home(props: {
-  searchParams: Promise<{ q?: string; marketplace?: string }>
-}) {
-  const searchParams = await props.searchParams;
-  const q = searchParams.q || "";
-  const marketplace = searchParams.marketplace || "Tudo";
-
-  const products = await getProducts(q, marketplace);
+export default async function FavoritesPage() {
+  const products = await getFavoritedProducts();
 
   return (
     <div className="main-wrapper">
       <Sidebar />
 
       <main className="content-area-wide">
-        <Header />
+        <div style={{ marginBottom: '3rem' }}>
+          <h1 style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '15px' }}>
+            Meus <span style={{ 
+              background: 'linear-gradient(120deg, var(--vibrant-blue), #00A3FF)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontWeight: 900
+            }}>Favoritos</span>
+            <Heart size={40} color="var(--vibrant-blue)" fill="var(--vibrant-blue)" />
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem' }}>
+            Sua lista personalizada de achados prontos para divulgar.
+          </p>
+        </div>
 
         <div style={{ 
           display: 'grid', 
           gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
-          gap: '2.5rem',
-          marginTop: '2rem'
+          gap: '2.5rem'
         }}>
           {products.length > 0 ? (
             products.map((product) => (
@@ -51,10 +57,10 @@ export default async function Home(props: {
               alignItems: 'center',
               gap: '1rem'
             }}>
-              <span style={{ fontSize: '3rem' }}>🔍</span>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Nenhum produto encontrado</h2>
+              <span style={{ fontSize: '3rem' }}>❤️</span>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Você ainda não tem favoritos</h2>
               <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', maxWidth: '400px' }}>
-                O motor de rastreio inteligente está trabalhando para encontrar as melhores ofertas para você.
+                Comece a explorar o dashboard e salve os melhores achados para vê-los aqui.
               </p>
             </div>
           )}

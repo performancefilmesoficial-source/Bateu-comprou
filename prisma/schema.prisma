@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PlanType {
+  FREE
+  STARTER
+  PRO
+  AGENCY
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String?
+  email         String    @unique
+  passwordHash  String?
+  affiliateId   String?   // Novo campo conforme especificação V2
+  
+  plan          PlanType  @default(FREE)
+  aiCreditsLeft Int       @default(3)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  generatedAIs  AIContent[]
+}
+
+model Product {
+  id              String   @id @default(uuid())
+  marketplace     String   // "amazon", "shopee", "mercado_livre"
+  externalId      String   @unique
+  name            String
+  price           Float
+  previousPrice   Float?   
+  url             String
+  videoUrl        String?  // URL para download do vídeo
+  images          String[]
+  isBestSeller    Boolean  @default(false)
+  isTrending      Boolean  @default(false)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  aiContent       AIContent?
+}
+
+model AIContent {
+  id              String   @id @default(uuid())
+  productId       String   @unique
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  userId          String?
+  creator         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  caption         String   @db.Text // Legenda gerada conforme especificação V2
+  affiliateLink   String   // Link final com ID do usuário
+  
+  generatedAt     DateTime @default(now())
+}

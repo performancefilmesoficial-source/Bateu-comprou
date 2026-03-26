@@ -1,29 +1,35 @@
 import Sidebar from "@/components/dashboard/Sidebar";
 import ProductCard from "@/components/dashboard/ProductCard";
-import Header from "@/components/dashboard/Header";
-import { getProducts } from "./actions";
+import { getTrends } from "@/app/actions";
+import { Flame } from "lucide-react";
 
-export default async function Home(props: {
-  searchParams: Promise<{ q?: string; marketplace?: string }>
-}) {
-  const searchParams = await props.searchParams;
-  const q = searchParams.q || "";
-  const marketplace = searchParams.marketplace || "Tudo";
-
-  const products = await getProducts(q, marketplace);
+export default async function TrendsPage() {
+  const products = await getTrends();
 
   return (
     <div className="main-wrapper">
       <Sidebar />
 
       <main className="content-area-wide">
-        <Header />
+        <div style={{ marginBottom: '3rem' }}>
+          <h1 style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '15px' }}>
+            Produtos <span style={{ 
+              background: 'linear-gradient(120deg, var(--vibrant-orange), #FF0000)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              fontWeight: 900
+            }}>Tendência</span>
+            <Flame size={40} color="var(--vibrant-orange)" fill="var(--vibrant-orange)" />
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.2rem' }}>
+            Os produtos que estão viralizando agora nas redes sociais com alto potencial de venda.
+          </p>
+        </div>
 
         <div style={{ 
           display: 'grid', 
           gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
-          gap: '2.5rem',
-          marginTop: '2rem'
+          gap: '2.5rem'
         }}>
           {products.length > 0 ? (
             products.map((product) => (
@@ -51,10 +57,10 @@ export default async function Home(props: {
               alignItems: 'center',
               gap: '1rem'
             }}>
-              <span style={{ fontSize: '3rem' }}>🔍</span>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Nenhum produto encontrado</h2>
+              <span style={{ fontSize: '3rem' }}>📈</span>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Aguardando detecção</h2>
               <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem', maxWidth: '400px' }}>
-                O motor de rastreio inteligente está trabalhando para encontrar as melhores ofertas para você.
+                Nossos algoritmos estão processando as redes sociais para identificar novos virais.
               </p>
             </div>
           )}
