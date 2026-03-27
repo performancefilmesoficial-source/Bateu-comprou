@@ -1,13 +1,10 @@
 # Nixpacks configuration for Python Scraper
 [phases.setup]
-nixPkgs = ["python311", "python311Packages.pip"]
+nixPkgs = ["python311"]
 aptPkgs = ["libnss3", "libnspr4", "libatk1.0-0t64", "libatk-bridge2.0-0t64", "libcups2t64", "libdrm2", "libxkbcommon0", "libxcomposite1", "libxdamage1", "libxext6", "libxfixes3", "libxrandr2", "libgbm1", "libpango-1.0-0", "libcairo2", "libasound2t64", "curl", "wget"]
 
-[phases.install]
-cmds = ["pip install -r requirements.txt", "PLAYWRIGHT_BROWSERS_PATH=/app/.cache/ms-playwright playwright install chromium"]
-
-[phases.build]
-cmds = []
+[phases.postInstall]
+cmds = ["PLAYWRIGHT_BROWSERS_PATH=/app/.cache/ms-playwright python -m playwright install chromium"]
 
 [start]
 cmd = "PLAYWRIGHT_BROWSERS_PATH=/app/.cache/ms-playwright python main.py"
