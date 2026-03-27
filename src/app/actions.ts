@@ -237,9 +237,10 @@ export async function getUserSettings(): Promise<AffiliateKeys> {
 
 export async function triggerScraper() {
   try {
-    // Tenta avisar o scraper que está rodando na porta 8000
-    // Em produção, isso pode ser um endpoint interno ou via Redis
-    const response = await fetch('http://localhost:8000/scrape', {
+    const scraperUrl = process.env.SCRAPER_URL || 'http://localhost:8000/scrape';
+    console.log('Disparando scraper em:', scraperUrl);
+
+    const response = await fetch(scraperUrl, {
       method: 'GET',
       headers: { 'Accept': 'application/json' },
     });
