@@ -146,7 +146,7 @@ def upsert_produtos(produtos: List[Product]) -> int:
             })
 
         response = (
-            client.table("Product")
+            client.table("products")
             .upsert(prisma_dados, on_conflict="externalId")
             .execute()
         )
