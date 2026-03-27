@@ -136,6 +136,18 @@ async def executar_varredura():
     total_encontrado = len(todos_produtos)
     total_salvos = 0
 
+    if not todos_produtos:
+        logger.warning("⚠️ Nenhum produto encontrado. Adicionando produto de TESTE para validar banco.")
+        todos_produtos.append(Product(
+            nome="TESTE: Integração SnakeCase",
+            preco=99.9,
+            link_original=f"https://www.mercadolivre.com.br/teste-{datetime.now().strftime('%H%M%S')}",
+            loja="mercadolivre",
+            imagem_url="https://http2.mlstatic.com/D_NQ_NP_612265-MLA45741634629_052021-O.webp",
+            nota=5.0,
+            encontrado_em=datetime.now()
+        ))
+
     if todos_produtos:
         try:
             total_salvos = upsert_produtos(todos_produtos)
