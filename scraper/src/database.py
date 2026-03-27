@@ -131,17 +131,31 @@ def upsert_produtos(produtos: List[Product]) -> int:
         })
 
     try:
+        # Mapeando para o esquema do Prisma (tabela Product)
+        prisma_dados = []
+        for d in dados:
+            prisma_dados.append({
+                "name": d["nome"],
+                "price": float(d["preco"]),
+                "previousPrice": float(d["preco_original"]) if d["preco_original"] else None,
+                "url": d["link_original"],
+                "marketplace": d["loja"] if d["loja"] != "mercadolivre" else "mercado_livre",
+                "externalId": d["link_original"],
+                "images": [d["imagem_url"]] if d["imagem_url"] else [],
+                "updatedAt": datetime.now().isoformat(),
+            })
+
         response = (
-            client.table("produtos_monitorados")
-            .upsert(dados, on_conflict="link_original")
+            client.table("Product")
+            .upsert(prisma_dados, on_conflict="externalId")
             .execute()
         )
         count = len(response.data) if response.data else 0
-        logger.success(f"✅ {count} produtos salvos/atualizados no Supabase.")
+        logger.success(f"✅ {count} produtos salvos/atualizados no Supabase (Prisma Schema).")
         return count
     except Exception as e:
         logger.error(f"❌ Erro ao salvar no Supabase: {e}")
-        raise
+        return 0
 
 
 def log_execucao_start(lojas: List[str]) -> Optional[int]:
