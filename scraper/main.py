@@ -48,7 +48,7 @@ logger.add(
 # ─────────────────────────────────────────────────────────────
 # Configurações vindas do .env
 # ─────────────────────────────────────────────────────────────
-MIN_RATING    = float(os.getenv("MIN_RATING", "4.5"))
+MIN_RATING    = float(os.getenv("MIN_RATING", "3.0"))
 MAX_PRODUCTS  = int(os.getenv("MAX_PRODUCTS_PER_STORE", "30"))
 HEADLESS      = os.getenv("HEADLESS", "true").lower() == "true"
 CRON_HORA_1   = os.getenv("CRON_HORA_1", "07:00")
