@@ -5,11 +5,11 @@ aptPkgs = ["libnss3", "libnspr4", "libatk1.0-0t64", "libatk-bridge2.0-0t64", "li
 
 [phases.install]
 dependsOn = ["setup"]
-cmds = ["python -m pip install --break-system-packages -r requirements.txt"]
+cmds = ["pip install --break-system-packages -r requirements.txt"]
 
 [phases.postInstall]
 dependsOn = ["install"]
-cmds = ["PLAYWRIGHT_BROWSERS_PATH=/app/.cache/ms-playwright python -m playwright install chromium"]
+cmds = ["PLAYWRIGHT_BROWSERS_PATH=/app/.cache/ms-playwright python3 -m playwright install chromium"]
 
 [start]
-cmd = "PLAYWRIGHT_BROWSERS_PATH=/app/.cache/ms-playwright python main.py"
+cmd = "PLAYWRIGHT_BROWSERS_PATH=/app/.cache/ms-playwright python3 main.py"
