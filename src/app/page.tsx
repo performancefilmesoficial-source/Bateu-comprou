@@ -1,7 +1,7 @@
 import Sidebar from "@/components/dashboard/Sidebar";
 import ProductCard from "@/components/dashboard/ProductCard";
 import Header from "@/components/dashboard/Header";
-import { getProducts } from "./actions";
+import { getProducts, getUserSettings } from "./actions";
 
 export default async function Home(props: {
   searchParams: Promise<{ q?: string; marketplace?: string }>
@@ -11,6 +11,7 @@ export default async function Home(props: {
   const marketplace = searchParams.marketplace || "Tudo";
 
   const products = await getProducts(q, marketplace);
+  const apiKeys = await getUserSettings();
 
   return (
     <div className="main-wrapper">
@@ -36,6 +37,9 @@ export default async function Home(props: {
                 viralScore={product.viral_score}
                 imageUrl={product.thumbnail_url || `https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=400`}
                 discount={product.discount_pct}
+                videoUrl={product.video_url}
+                originalUrl={product.original_url}
+                apiKeys={apiKeys}
               />
             ))
           ) : (

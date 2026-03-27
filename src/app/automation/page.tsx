@@ -1,7 +1,31 @@
+"use client"
+
+import { useState } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
-import { Send, Zap, Calendar, History, Play, Pause } from "lucide-react";
+import { Send, Zap, Calendar, History, Play, Pause, Loader2 } from "lucide-react";
+import { triggerScraper } from "@/app/actions";
 
 export default function AutomationPage() {
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const handleStartBot = async () => {
+    setLoading(true);
+    setMessage("");
+    try {
+      const result = await triggerScraper();
+      if (result.success) {
+        setMessage("✅ Robô iniciado com sucesso!");
+      } else {
+        setMessage(`❌ ${result.error}`);
+      }
+    } catch (err) {
+      setMessage("❌ Erro ao conectar com o robô.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="main-wrapper">
       <Sidebar />
@@ -31,13 +55,21 @@ export default function AutomationPage() {
         <div className="card-light" style={{ padding: '3rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
             <h3 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Configuração do Robô</h3>
-            <div style={{ display: 'flex', gap: '15px' }}>
-              <button className="btn-modern" style={{ background: '#FEE2E2', color: '#EF4444', boxShadow: 'none' }}>
-                <Pause size={18} /> Pausar Bot
-              </button>
-              <button className="btn-modern btn-whatsapp">
-                <Play size={18} /> Iniciar Bot
-              </button>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
+              <div style={{ display: 'flex', gap: '15px' }}>
+                <button className="btn-modern" style={{ background: '#FEE2E2', color: '#EF4444', boxShadow: 'none' }}>
+                  <Pause size={18} /> Pausar Bot
+                </button>
+                <button 
+                  onClick={handleStartBot}
+                  disabled={loading}
+                  className="btn-modern btn-whatsapp"
+                >
+                  {loading ? <Loader2 size={18} className="animate-spin" /> : <Play size={18} />} 
+                  {loading ? "Iniciando..." : "Iniciar Bot"}
+                </button>
+              </div>
+              {message && <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{message}</span>}
             </div>
           </div>
 

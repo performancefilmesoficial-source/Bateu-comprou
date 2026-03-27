@@ -1,10 +1,11 @@
 import Sidebar from "@/components/dashboard/Sidebar";
 import ProductCard from "@/components/dashboard/ProductCard";
-import { getTrends } from "@/app/actions";
+import { getTrends, getUserSettings } from "@/app/actions";
 import { Flame } from "lucide-react";
 
 export default async function TrendsPage() {
   const products = await getTrends();
+  const apiKeys = await getUserSettings();
 
   return (
     <div className="main-wrapper">
@@ -42,6 +43,9 @@ export default async function TrendsPage() {
                 viralScore={product.viral_score}
                 imageUrl={product.thumbnail_url || `https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=400`}
                 discount={product.discount_pct}
+                videoUrl={product.video_url}
+                originalUrl={product.original_url}
+                apiKeys={apiKeys}
               />
             ))
           ) : (

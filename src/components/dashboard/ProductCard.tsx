@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Heart, Copy, MessageCircle, Download, Zap, Loader2 } from "lucide-react"
+import { Heart, Copy, MessageCircle, Download, Zap, Loader2, FileText, X } from "lucide-react"
 import MarketplaceLogo from "./MarketplaceLogo"
-import { toggleFavorite } from "@/app/actions"
+import { toggleFavorite, AffiliateKeys } from "@/app/actions"
+import { buildAffiliateLink } from "@/utils/affiliate"
 
 interface ProductCardProps {
   id: string
@@ -13,11 +14,19 @@ interface ProductCardProps {
   viralScore?: number
   imageUrl: string
   discount?: number
+  videoUrl?: string
+  originalUrl?: string
+  apiKeys?: AffiliateKeys
 }
 
-export default function ProductCard({ id, name, price, marketplace, viralScore, imageUrl, discount }: ProductCardProps) {
+export default function ProductCard({ id, name, price, marketplace, viralScore, imageUrl, discount, videoUrl, originalUrl, apiKeys }: ProductCardProps) {
   const [isFavorited, setIsFavorited] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [downloading, setDownloading] = useState(false)
+  const [showCaptionModal, setShowCaptionModal] = useState(false)
+  const [caption, setCaption] = useState("")
+
+  const affiliateLink = buildAffiliateLink(originalUrl || "#", marketplace, apiKeys || {})
 
   const handleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -33,13 +42,46 @@ export default function ProductCard({ id, name, price, marketplace, viralScore, 
   }
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(`https://bateucomprou.com/p/${id}`)
-    alert("Link copiado com sucesso! 🎉")
+    navigator.clipboard.writeText(affiliateLink)
+    alert("Link de Afiliado copiado! 🎉")
   }
 
   const handleWhatsApp = () => {
-    const text = `🔥 Olha esse achado que vi no Bateu Comprou!\n\n📦 ${name}\n💰 Por apenas R$ ${price}\n\nConfira aqui: https://bateucomprou.com/p/${id}`;
+    const text = `🔥 Olha esse achado que vi no Bateu Comprou!\n\n📦 ${name}\n💰 Por apenas R$ ${price}\n\nConfira aqui: ${affiliateLink}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  }
+
+  const handleDownload = async () => {
+    if (!videoUrl) return alert("Vídeo não disponível para este produto.")
+    
+    setDownloading(true)
+    try {
+      const response = await fetch(videoUrl)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `video-bateu-comprou-${id}.mp4`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error("Erro no download:", error)
+      alert("Erro ao baixar o vídeo.")
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  const generateCaption = () => {
+    const templates = [
+      `Gente, olha que incrível esse(a) ${name}! 😍\n\nPor apenas R$ ${price} 💸\n\nComenta "EU QUERO" que mando o link! 👇\n\nOu compre agora: ${affiliateLink}`,
+      `🔥 ACHADINHO DO DIA! 🔥\n\n${name}\nDe R$ XXX por apenas R$ ${price} 😱\n\nCorre que o estoque acaba rápido! 🛒\n\nLink no comentário fixado ou aqui: ${affiliateLink}`,
+      `Você precisa ver isso! 🤩 ${name} em oferta imperdível.\n\nAproveite agora por R$ ${price} no Bateu Comprou! 🚀\n\nLink: ${affiliateLink}`
+    ]
+    setCaption(templates[Math.floor(Math.random() * templates.length)])
+    setShowCaptionModal(true)
   }
 
   return (
@@ -165,15 +207,86 @@ export default function ProductCard({ id, name, price, marketplace, viralScore, 
               <MessageCircle size={18} /> Zap
             </button>
           </div>
-          <button className="btn-modern btn-download" style={{ 
-            width: '100%', 
-            background: 'linear-gradient(135deg, #FFB800 0%, #FF9100 100%)',
-            color: 'var(--text-main)'
-          }}>
-            <Download size={18} /> Baixar Vídeo
-          </button>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <button 
+              onClick={handleDownload} 
+              disabled={downloading}
+              className="btn-modern btn-download" 
+              style={{ 
+                background: 'linear-gradient(135deg, #FFB800 0%, #FF9100 100%)',
+                color: 'var(--text-main)',
+                padding: '10px'
+              }}
+            >
+              {downloading ? <Loader2 size={18} className="animate-spin" /> : <Download size={18} />} 
+              {downloading ? "Baixando" : "Vídeo"}
+            </button>
+            <button 
+              onClick={generateCaption}
+              className="btn-modern" 
+              style={{ 
+                background: 'var(--vibrant-blue)',
+                color: 'white',
+                padding: '10px'
+              }}
+            >
+              <FileText size={18} /> Legenda
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Caption Modal */}
+      {showCaptionModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '2rem'
+        }}>
+          <div className="card-light" style={{ width: '100%', maxWidth: '500px', padding: '2rem', position: 'relative' }}>
+            <button 
+              onClick={() => setShowCaptionModal(false)}
+              style={{ position: 'absolute', top: '1rem', right: '1rem', border: 'none', background: 'transparent', cursor: 'pointer' }}
+            >
+              <X size={24} color="var(--text-muted)" />
+            </button>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '1.5rem' }}>Sua Legenda Viral</h3>
+            <textarea 
+              rows={8}
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              style={{ 
+                width: '100%', 
+                padding: '1rem', 
+                borderRadius: '12px', 
+                border: '1px solid var(--border-light)', 
+                fontSize: '1rem',
+                marginBottom: '1.5rem',
+                fontFamily: 'inherit'
+              }}
+            />
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText(caption)
+                alert("Legenda copiada! ✨")
+              }}
+              className="btn-modern btn-copy"
+              style={{ width: '100%' }}
+            >
+              <Copy size={20} /> Copiar Legenda
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

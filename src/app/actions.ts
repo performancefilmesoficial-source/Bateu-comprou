@@ -14,6 +14,13 @@ export interface Product {
   viral_score: number;
   sales_volume: number;
   created_at: string;
+  category?: string;
+}
+
+export interface AffiliateKeys {
+  amazon_tag?: string;
+  shopee_key?: string;
+  ml_credentials?: string;
 }
 
 const MOCK_PRODUCTS: Product[] = [
@@ -206,4 +213,41 @@ export async function signUp(formData: FormData) {
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+}
+
+export async function getUserSettings(): Promise<AffiliateKeys> {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) return {};
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('api_keys')
+      .eq('id', user.id)
+      .single();
+
+    return (profile?.api_keys as AffiliateKeys) || {};
+  } catch (error) {
+    console.error('Erro ao buscar configurações:', error);
+    return {};
+  }
+}
+
+export async function triggerScraper() {
+  try {
+    // Tenta avisar o scraper que está rodando na porta 8000
+    // Em produção, isso pode ser um endpoint interno ou via Redis
+    const response = await fetch('http://localhost:8000/scrape', {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+    });
+    
+    if (!response.ok) throw new Error('Scraper indisponível');
+    return { success: true };
+  } catch (error) {
+    console.error('Erro ao disparar scraper:', error);
+    return { error: 'Não foi possível iniciar o robô. Verifique se o serviço está rodando.' };
+  }
 }
