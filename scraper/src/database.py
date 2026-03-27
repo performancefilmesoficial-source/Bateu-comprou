@@ -132,26 +132,28 @@ def upsert_produtos(produtos: List[Product]) -> int:
 
     try:
         # Mapeando para o esquema do Prisma (tabela Product)
-        prisma_dados = []
+        dashboard_dados = []
         for d in dados:
-            prisma_dados.append({
+            dashboard_dados.append({
                 "name": d["nome"],
                 "price": float(d["preco"]),
-                "previousPrice": float(d["preco_original"]) if d["preco_original"] else None,
-                "url": d["link_original"],
-                "marketplace": d["loja"] if d["loja"] != "mercadolivre" else "mercado_livre",
-                "externalId": d["link_original"],
-                "images": [d["imagem_url"]] if d["imagem_url"] else [],
-                "updatedAt": datetime.now().isoformat(),
+                "marketplace": d["loja"] if d["loja"] != "mercadolivre" else "ml",
+                "original_url": d["link_original"],
+                "thumbnail_url": d["imagem_url"] if d["imagem_url"] else "",
+                "video_url": "",
+                "viral_score": 0,
+                "sales_volume": 0,
+                "discount_pct": d["desconto_pct"] if d["desconto_pct"] else 0,
+                "created_at": datetime.now().isoformat(),
             })
 
         response = (
             client.table("products")
-            .upsert(prisma_dados, on_conflict="externalId")
+            .upsert(dashboard_dados, on_conflict="original_url")
             .execute()
         )
         count = len(response.data) if response.data else 0
-        logger.success(f"✅ {count} produtos salvos/atualizados no Supabase (Prisma Schema).")
+        logger.success(f"✅ {count} produtos salvos/atualizados no Supabase (Dashboard Schema).")
         return count
     except Exception as e:
         logger.error(f"❌ Erro ao salvar no Supabase: {e}")
