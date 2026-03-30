@@ -83,8 +83,8 @@ ON CONFLICT (key) DO NOTHING;
 
 def get_client() -> Client:
     """Cria e retorna o cliente Supabase."""
-    url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_KEY")
+    url = os.getenv("SUPABASE_URL") or os.getenv("NEXT_PUBLIC_SUPABASE_URL")
+    key = os.getenv("SUPABASE_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")
     if not url or not key:
         raise ValueError(
             "❌ SUPABASE_URL e SUPABASE_KEY devem estar definidos no .env"
@@ -114,6 +114,7 @@ def upsert_produtos(produtos: List[Product]) -> int:
     dados = []
     for p in produtos:
         dados.append({
+            "external_id": p.external_id,
             "nome": p.nome,
             "preco": p.preco,
             "preco_original": p.preco_original,
@@ -127,7 +128,7 @@ def upsert_produtos(produtos: List[Product]) -> int:
             "estoque_disponivel": p.estoque_disponivel,
             "poucas_unidades": p.poucas_unidades,
             "categoria": p.categoria,
-            "encontrado_em": p.encontrado_em.isoformat(),
+            "encontrado_em": p.encontrado_em.isoformat() if p.encontrado_em else datetime.now().isoformat(),
         })
 
     try:
@@ -135,21 +136,22 @@ def upsert_produtos(produtos: List[Product]) -> int:
         dashboard_dados = []
         for d in dados:
             dashboard_dados.append({
+                "externalId": d["external_id"],
+                "marketplace": d["loja"] if d["loja"] != "mercadolivre" else "mercado_livre",
                 "name": d["nome"],
                 "price": float(d["preco"]),
-                "marketplace": d["loja"] if d["loja"] != "mercadolivre" else "ml",
-                "original_url": d["link_original"],
-                "thumbnail_url": d["imagem_url"] if d["imagem_url"] else "",
-                "video_url": "",
-                "viral_score": 0,
-                "sales_volume": 0,
-                "discount_pct": d["desconto_pct"] if d["desconto_pct"] else 0,
-                "created_at": datetime.now().isoformat(),
+                "previousPrice": float(d["preco_original"]) if d["preco_original"] else None,
+                "url": d["link_original"],
+                "images": [d["imagem_url"]] if d["imagem_url"] else [],
+                "isBestSeller": False,
+                "isTrending": False,
+                "createdAt": d["encontrado_em"],
+                "updatedAt": datetime.now().isoformat(),
             })
 
         response = (
-            client.table("products")
-            .upsert(dashboard_dados, on_conflict="original_url")
+            client.table("Product")
+            .upsert(dashboard_dados, on_conflict="externalId")
             .execute()
         )
         count = len(response.data) if response.data else 0

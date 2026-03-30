@@ -7,6 +7,7 @@ from datetime import datetime
 
 
 class Product(BaseModel):
+    external_id: str
     nome: str
     preco: float
     preco_original: Optional[float] = None

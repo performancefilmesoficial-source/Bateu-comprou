@@ -135,26 +135,25 @@ async def executar_varredura():
     # ── Salvar no banco ──────────────────────────────────────
     total_encontrado = len(todos_produtos)
     total_salvos = 0
-
-    if not todos_produtos:
-        logger.warning("⚠️ Nenhum produto encontrado. Adicionando produto de TESTE para validar banco.")
-        todos_produtos.append(Product(
-            nome="TESTE: Integração SnakeCase",
-            preco=99.9,
-            link_original=f"https://www.mercadolivre.com.br/teste-{datetime.now().strftime('%H%M%S')}",
-            loja="mercadolivre",
-            imagem_url="https://http2.mlstatic.com/D_NQ_NP_612265-MLA45741634629_052021-O.webp",
-            nota=5.0,
-            encontrado_em=datetime.now()
-        ))
-
+    # Salvar no banco (Supabase)
     if todos_produtos:
+        logger.info(f"💾 Salvando {len(todos_produtos)} produtos no Supabase (Dashboard)...")
         try:
-            total_salvos = upsert_produtos(todos_produtos)
+            sucesso_upsert = upsert_produtos(todos_produtos)
+            if sucesso_upsert:
+                logger.info(f"✅ Sucesso: {len(todos_produtos)} produtos atualizados.")
+                total_salvos = len(todos_produtos)
+            else:
+                logger.error("❌ Falha crítica ao salvar no Supabase.")
+                erros_globais.append("Falha crítica ao salvar no Supabase.")
         except Exception as e:
             msg = f"ERRO ao salvar no banco: {e}"
             logger.error(f"❌ {msg}")
             erros_globais.append(msg)
+    else:
+        logger.warning("⚠️ Nenhum produto válido coletado para salvar.")
+        erros_globais.append("Nenhum produto válido coletado para salvar.")
+
 
     # ── Relatório final ─────────────────────────────────────
     duracao = (datetime.now() - inicio).seconds

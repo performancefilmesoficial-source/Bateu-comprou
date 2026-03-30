@@ -112,6 +112,9 @@ async def _scrape_lista(page: Page, url: str, min_rating: float, max_products: i
             if not link:
                 continue
             link = link.split("?")[0]  # remove tracking params
+            # Extração de ID (MLB-...)
+            mlb_match = re.search(r"(MLB-?\d+)", link)
+            external_id = mlb_match.group(1).replace("-", "") if mlb_match else f"ml_{int(datetime.now().timestamp())}"
 
             # Imagem
             img_el = await card.query_selector(ML_SELECTORS["imagem"])
@@ -126,6 +129,7 @@ async def _scrape_lista(page: Page, url: str, min_rating: float, max_products: i
                         break
 
             produtos_raw.append({
+                "external_id": external_id,
                 "nome": nome,
                 "preco": preco,
                 "preco_original": preco_original,
@@ -249,6 +253,7 @@ async def scrape_mercadolivre(context: BrowserContext, min_rating: float = 4.5, 
                 imagem_final = estoque_info.get("imagem_ajustada") or item.get("imagem_url")
 
                 produto = Product(
+                    external_id=item["external_id"],
                     nome=item["nome"],
                     preco=preco_final,
                     preco_original=item.get("preco_original"),

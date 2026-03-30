@@ -123,7 +123,12 @@ async def _scrape_lista(page: Page, url: str, min_rating: float, max_products: i
             if img_el:
                 imagem = await img_el.get_attribute("src")
 
+            # Extração de ASIN (Amazon Standard Identification Number)
+            asin_match = re.search(r"/(?:dp|gp/product|product)/([A-Z0-9]{10})", link)
+            external_id = asin_match.group(1) if asin_match else f"amz_{int(datetime.now().timestamp())}"
+
             produtos_raw.append({
+                "external_id": external_id,
                 "nome": nome,
                 "preco": preco,
                 "link_original": link,
@@ -242,6 +247,7 @@ async def scrape_amazon(context: BrowserContext, min_rating: float = 4.5, max_pr
                 imagem_final = estoque_info.get("imagem_ajustada") or item.get("imagem_url")
 
                 produto = Product(
+                    external_id=item["external_id"],
                     nome=item["nome"],
                     preco=preco_final,
                     preco_original=preco_original,

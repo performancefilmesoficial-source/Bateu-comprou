@@ -140,7 +140,16 @@ async def _scrape_lista(page: Page, url: str, min_rating: float, max_products: i
                     imagem = re.sub(r"_tn$", "", img_src)
                     logger.debug(f"📸 Shopee: Forçando HQ para {imagem}")
 
+            # Extração de ID (Shopee: shopid e itemid)
+            # Link pattern: https://shopee.com.br/product-name-i.SHOPID.ITEMID
+            shopee_match = re.search(r"-i\.(\d+)\.(\d+)", link)
+            if shopee_match:
+                external_id = f"shopee_{shopee_match.group(1)}_{shopee_match.group(2)}"
+            else:
+                external_id = f"shopee_{int(datetime.now().timestamp())}_{nome[:10]}"
+
             produtos_raw.append({
+                "external_id": external_id,
                 "nome": nome,
                 "preco": preco,
                 "preco_original": preco_original,
@@ -228,6 +237,7 @@ async def scrape_shopee(context: BrowserContext, min_rating: float = 4.5, max_pr
                     continue
 
                 produto = Product(
+                    external_id=item["external_id"],
                     nome=item["nome"],
                     preco=item["preco"],
                     preco_original=item.get("preco_original"),
